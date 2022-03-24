@@ -449,10 +449,10 @@ parser_parse_tblock(struct parser *parser, struct block *blk)
 			return false;
 		}
 		vector_push(blk->tag.tblock.subblocks, subblk);
+		parser_next_token(parser);
 		if (subblk->type == BLOCK_TAG && subblk->tag.type == TAG_CLOSE) {
 			break;
 		}
-		parser_next_token(parser);
 	}
 
 	hmap_sets(parser->tblocks, blk->tag.tblock.name.token.literal, blk);
@@ -519,7 +519,7 @@ closing:
 	blk->tag.type = TAG_CLOSE;
 onetoken:
 	if (!parser_expect_peek(parser, TOKEN_PERCENT)) goto fail;
-	if (!parser_expect_peek(parser, TOKEN_RBRACE)) goto fail;
+	if (!parser_peek_token_is(parser, TOKEN_RBRACE)) goto fail;
 	return blk;
 noopening:;
 	parser_error(parser, parser->cur_token, "unexpected closing tag %s",
