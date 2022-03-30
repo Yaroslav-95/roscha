@@ -34,4 +34,5 @@ calling `roscha_deinit()`.
 * Better document this... or not if nobody else uses?
 * Probably fix some bugs that are currently hidden.
 * k, v arguments in for...in loops over hashmaps
+* make hashmaps grow in capacity over a certain load threshold.
 * Other stuff like space trimming

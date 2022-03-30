@@ -35,8 +35,12 @@ struct roscha_object {
 	enum roscha_type type;
 	size_t refcount;
 	union {
-		/* booleans are only used internally */
-		bool boolean;
+		/*
+		 * booleans are only used internally. It's not a bool so that we can
+		 * evaluate as truthy objects such as integers and the other types
+		 * without overflow problems of bool.
+		 */
+		uintptr_t boolean;
 		/* integer numbers */
 		int64_t integer;
 		/* A dynamic string using the sds library */
