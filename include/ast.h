@@ -42,12 +42,12 @@ struct ident {
 
 struct integer {
 	struct token token;
-	int64_t value;
+	int64_t      value;
 };
 
 struct boolean {
 	struct token token;
-	bool value;
+	bool         value;
 };
 
 struct string {
@@ -56,21 +56,21 @@ struct string {
 };
 
 struct prefix {
-	struct token token;
-	struct slice operator;
+	struct token       token;
+	struct slice       operator;
 	struct expression *right;
 };
 
 struct infix {
-	struct token token;
-	struct slice operator;
+	struct token       token;
+	struct slice       operator;
 	struct expression *left;
 	struct expression *right;
 };
 
 /* Either a map key (map.k) or an array/vector index (arr[i]) */
 struct indexkey {
-	struct token token;
+	struct token       token;
 	struct expression *left;
 	struct expression *key;
 };
@@ -78,13 +78,13 @@ struct indexkey {
 struct expression {
 	enum expression_type type;
 	union {
-		struct token token;
-		struct ident ident;
-		struct integer integer;
-		struct boolean boolean;
-		struct string string;
-		struct prefix prefix;
-		struct infix infix;
+		struct token    token;
+		struct ident    ident;
+		struct integer  integer;
+		struct boolean  boolean;
+		struct string   string;
+		struct prefix   prefix;
+		struct infix    infix;
 		struct indexkey indexkey;
 	};
 };
@@ -94,44 +94,44 @@ struct branch {
 	struct token token;
 	/* if condition is null it means it is an else branch */
 	struct expression *condition;
-	struct vector *subblocks;
+	struct vector     *subblocks;
 	/* elif or else */
 	struct branch *next;
 };
 
 /* start of if, elif, else */
 struct cond {
-	struct token token;
+	struct token   token;
 	struct branch *root;
 };
 
 /* for loop */
 struct loop {
-	struct token token;
-	struct ident item;
+	struct token       token;
+	struct ident       item;
 	struct expression *seq;
-	struct vector *subblocks;
+	struct vector     *subblocks;
 };
 
 /* template block {% block ... %} */
 struct tblock {
-	struct token token;
-	struct ident name;
+	struct token   token;
+	struct ident   name;
 	struct vector *subblocks;
 };
 
 /* {% extends ... %} */
 struct parent {
-	struct token token;
+	struct token   token;
 	struct string *name;
 };
 
 /* {% ... %} blocks */
 struct tag {
-	union{
-		struct token token;
-		struct cond cond;
-		struct loop loop;
+	union {
+		struct token  token;
+		struct cond   cond;
+		struct loop   loop;
 		struct tblock tblock;
 		struct parent parent;
 	};
@@ -140,7 +140,7 @@ struct tag {
 
 /* {{ ... }} blocks */
 struct variable {
-	struct token token;
+	struct token       token;
 	struct expression *expression;
 };
 
@@ -151,21 +151,22 @@ struct content {
 
 /*
  * The template is divided into blocks or chunks which are either plain text
- * content, {% %} tags or {{ }} variables. Not to be confused with 
+ * content, {% %} tags or {{ }} variables. Not to be confused with
  * {% block ... %} tags.
  */
 struct block {
 	union {
-		struct token token;
-		struct content content;
-		struct tag tag;
+		struct token    token;
+		struct content  content;
+		struct tag      tag;
 		struct variable variable;
 	};
 	enum block_type type;
 };
 
 /* Root of the AST */
-struct template {
+struct template
+{
 	/*
 	 * The name of the template, might be a file name; used to identifiy the
 	 * template in error messages. Will be free'd by template_destroy function
@@ -179,7 +180,7 @@ struct template {
 	char *source;
 	/*
 	 * struct that holds references to {% block ... %} tags, for easier/faster
-	 * access to said blocks. 
+	 * access to said blocks.
 	 */
 	struct hmap *tblocks;
 	/*

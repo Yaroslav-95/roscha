@@ -1,25 +1,26 @@
 #include "object.h"
 
 static const char *roscha_types[] = {
-	"null",
-	"int",
-	"bool",
-	"string",
-	"vector",
-	"hashmap",
+	[ROSCHA_NULL]   = "null",
+	[ROSCHA_INT]    = "int",
+	[ROSCHA_BOOL]   = "bool",
+	[ROSCHA_STRING] = "string",
+	[ROSCHA_SLICE]  = "slice",
+	[ROSCHA_VECTOR] = "vector",
+	[ROSCHA_HMAP]   = "hashmap",
 };
+
+extern inline const char *
+roscha_type_print(enum roscha_type type)
+{
+	return roscha_types[type];
+}
 
 static void
 roscha_object_destroy_hmap_cb(const struct slice *key, void *val)
 {
 	struct roscha_object *obj = val;
 	roscha_object_unref(obj);
-}
-
-extern inline const char *
-roscha_type_print(enum roscha_type type)
-{
-	return roscha_types[type];
 }
 
 static inline sds
@@ -32,10 +33,10 @@ bool_string(bool val, sds str)
 static inline sds
 vector_string(struct vector *vec, sds str)
 {
-	size_t i;
+	size_t                i;
 	struct roscha_object *obj;
 	str = sdscat(str, "[ ");
-	vector_foreach(vec, i, obj) {
+	vector_foreach (vec, i, obj) {
 		str = roscha_object_string(obj, str);
 		str = sdscat(str, ", ");
 	}
@@ -48,13 +49,13 @@ hmap_string(struct hmap *map, sds str)
 {
 	str = sdscat(str, "{ ");
 	const struct slice *key;
-	void *val;
-	struct hmap_iter *iter = hmap_iter_new(map);
-	hmap_iter_foreach(iter, &key, &val) {
-		str = sdscatfmt(str, "\"%s\": ", key->str);
+	void               *val;
+	struct hmap_iter   *iter = hmap_iter_new(map);
+	hmap_iter_foreach (iter, &key, &val) {
+		str                             = sdscatfmt(str, "\"%s\": ", key->str);
 		const struct roscha_object *obj = val;
-		str = roscha_object_string(obj, str);
-		str = sdscat(str, ", ");
+		str                             = roscha_object_string(obj, str);
+		str                             = sdscat(str, ", ");
 	}
 	str = sdscat(str, "}");
 
@@ -87,9 +88,9 @@ struct roscha_object *
 roscha_object_new_int(int64_t val)
 {
 	struct roscha_object *obj = malloc(sizeof(*obj));
-	obj->type = ROSCHA_INT;
-	obj->refcount = 1;
-	obj->integer = val;
+	obj->type                 = ROSCHA_INT;
+	obj->refcount             = 1;
+	obj->integer              = val;
 	return obj;
 }
 
@@ -97,9 +98,9 @@ struct roscha_object *
 roscha_object_new_slice(struct slice s)
 {
 	struct roscha_object *obj = malloc(sizeof(*obj));
-	obj->type = ROSCHA_SLICE;
-	obj->refcount = 1;
-	obj->slice = s;
+	obj->type                 = ROSCHA_SLICE;
+	obj->refcount             = 1;
+	obj->slice                = s;
 	return obj;
 }
 
@@ -107,9 +108,9 @@ struct roscha_object *
 roscha_object_new_string(sds str)
 {
 	struct roscha_object *obj = malloc(sizeof(*obj));
-	obj->type = ROSCHA_STRING;
-	obj->refcount = 1;
-	obj->string = str;
+	obj->type                 = ROSCHA_STRING;
+	obj->refcount             = 1;
+	obj->string               = str;
 	return obj;
 }
 
@@ -117,9 +118,9 @@ struct roscha_object *
 roscha_object_new_vector(struct vector *vec)
 {
 	struct roscha_object *obj = malloc(sizeof(*obj));
-	obj->type = ROSCHA_VECTOR;
-	obj->refcount = 1;
-	obj->vector = vec;
+	obj->type                 = ROSCHA_VECTOR;
+	obj->refcount             = 1;
+	obj->vector               = vec;
 	return obj;
 }
 
@@ -127,27 +128,21 @@ struct roscha_object *
 roscha_object_new_hmap(struct hmap *map)
 {
 	struct roscha_object *obj = malloc(sizeof(*obj));
-	obj->type = ROSCHA_HMAP;
-	obj->refcount = 1;
-	obj->hmap = map;
+	obj->type                 = ROSCHA_HMAP;
+	obj->refcount             = 1;
+	obj->hmap                 = map;
 	return obj;
 }
 
 static inline void
 roscha_object_vector_destroy(struct roscha_object *obj)
 {
-	size_t i;
+	size_t                i;
 	struct roscha_object *subobj;
-	vector_foreach(obj->vector, i, subobj) {
+	vector_foreach (obj->vector, i, subobj) {
 		roscha_object_unref(subobj);
 	}
 	vector_free(obj->vector);
-}
-
-inline void
-roscha_object_ref(struct roscha_object *obj)
-{
-	obj->refcount++;
 }
 
 void
@@ -188,7 +183,7 @@ roscha_vector_pop(struct roscha_object *vec)
 
 struct roscha_object *
 roscha_hmap_sets(struct roscha_object *hmap, struct slice key,
-		struct roscha_object *value)
+                 struct roscha_object *value)
 {
 	roscha_object_ref(value);
 	return hmap_sets(hmap->hmap, key, value);
@@ -196,7 +191,7 @@ roscha_hmap_sets(struct roscha_object *hmap, struct slice key,
 
 struct roscha_object *
 roscha_hmap_setstr(struct roscha_object *hmap, const char *key,
-		struct roscha_object *value)
+                   struct roscha_object *value)
 {
 	roscha_object_ref(value);
 	return hmap_set(hmap->hmap, key, value);
@@ -221,8 +216,8 @@ roscha_hmap_pops(struct roscha_object *hmap, const struct slice *key)
 }
 
 struct roscha_object *
-roscha_hmap_popstr(struct roscha_object *hmap, 
-		const char *key)
+roscha_hmap_popstr(struct roscha_object *hmap,
+                   const char           *key)
 {
 	return (struct roscha_object *)hmap_remove(hmap->hmap, key);
 }

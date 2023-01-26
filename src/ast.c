@@ -8,9 +8,9 @@
 static inline sds
 subblocks_string(struct vector *subblocks, sds str)
 {
-	size_t i;
+	size_t        i;
 	struct block *subblk;
-	vector_foreach(subblocks, i, subblk) {
+	vector_foreach (subblocks, i, subblk) {
 		str = block_string(subblk, str);
 		str = sdscat(str, "\n");
 	}
@@ -255,9 +255,9 @@ expression_destroy(struct expression *expr)
 static inline void
 subblocks_destroy(struct vector *subblks)
 {
-	size_t i;
+	size_t        i;
 	struct block *blk;
-	vector_foreach(subblks, i, blk){
+	vector_foreach (subblks, i, blk) {
 		block_destroy(blk);
 	}
 	vector_free(subblks);

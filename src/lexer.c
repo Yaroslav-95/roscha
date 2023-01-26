@@ -17,9 +17,9 @@ set_token(struct token *token, enum token_type t, const struct slice *s)
 {
 	token->type = t;
 	if (s == NULL) {
-		token->literal.str = "";
+		token->literal.str   = "";
 		token->literal.start = 0;
-		token->literal.end = 0;
+		token->literal.end   = 0;
 	} else {
 		slice_cpy(&token->literal, s);
 	}
@@ -63,60 +63,58 @@ lexer_read_char(struct lexer *lexer)
 static void
 lexer_read_ident(struct lexer *lexer, struct token *token)
 {
-	size_t start = lexer->word.start;
+	size_t start       = lexer->word.start;
 	token->literal.str = lexer->input;
-	while (isidentc(lexer->input[lexer->word.start]) 
-			|| isdigit(lexer->input[lexer->word.start])) {
+	while (isidentc(lexer->input[lexer->word.start])
+	       || isdigit(lexer->input[lexer->word.start])) {
 		lexer_read_char(lexer);
 	}
 	token->literal.start = start;
-	token->literal.end = lexer->word.start;
+	token->literal.end   = lexer->word.start;
 }
 
 static void
 lexer_read_num(struct lexer *lexer, struct token *token)
 {
-	size_t start = lexer->word.start;
+	size_t start       = lexer->word.start;
 	token->literal.str = lexer->input;
 	while (isdigit(lexer->input[lexer->word.start])) {
 		lexer_read_char(lexer);
 	}
 	token->literal.start = start;
-	token->literal.end = lexer->word.start;
+	token->literal.end   = lexer->word.start;
 }
 
 static void
 lexer_read_string(struct lexer *lexer, struct token *token)
 {
-	size_t start = lexer->word.start;
+	size_t start       = lexer->word.start;
 	token->literal.str = lexer->input;
 	lexer_read_char(lexer);
-	while(lexer->input[lexer->word.start] != '"' &&
-			lexer->input[lexer->word.start] != '\0') {
+	while (lexer->input[lexer->word.start] != '"' && lexer->input[lexer->word.start] != '\0') {
 		lexer_read_char(lexer);
 	}
 	lexer_read_char(lexer);
 	token->literal.start = start;
-	token->literal.end = lexer->word.start;
+	token->literal.end   = lexer->word.start;
 }
 
 static void
 lexer_read_content(struct lexer *lexer, struct token *token)
 {
-	size_t start = lexer->word.start;
+	size_t start       = lexer->word.start;
 	token->literal.str = lexer->input;
-	while(lexer->input[lexer->word.start] != '{' &&
-			lexer->input[lexer->word.start] != '\0') {
+	while (lexer->input[lexer->word.start] != '{' && lexer->input[lexer->word.start] != '\0') {
 		lexer_read_char(lexer);
 	}
 	token->literal.start = start;
-	token->literal.end = lexer->word.start;
+	token->literal.end   = lexer->word.start;
 }
 
 static void
 lexer_eatspace(struct lexer *lexer)
 {
-	while(isspace(lexer->input[lexer->word.start])) {
+	while (isspace(lexer->input[lexer->word.start])) {
 		lexer_read_char(lexer);
 	}
 }
@@ -125,14 +123,14 @@ struct lexer *
 lexer_new(const char *input)
 {
 	struct lexer *lexer = malloc(sizeof(*lexer));
-	lexer->input = input;
-	lexer->len = strlen(lexer->input);
-	lexer->word.str = lexer->input;
-	lexer->word.start = 0;
-	lexer->word.end = 0;
-	lexer->in_content = true;
-	lexer->line = 1;
-	lexer->column = 0;
+	lexer->input        = input;
+	lexer->len          = strlen(lexer->input);
+	lexer->word.str     = lexer->input;
+	lexer->word.start   = 0;
+	lexer->word.end     = 0;
+	lexer->in_content   = true;
+	lexer->line         = 1;
+	lexer->column       = 0;
 	lexer_read_char(lexer);
 
 	return lexer;
@@ -141,8 +139,8 @@ lexer_new(const char *input)
 struct token
 lexer_next_token(struct lexer *lexer)
 {
-	struct token token = { .line = lexer->line, .column = lexer->column };
-	char c = lexer->input[lexer->word.start];
+	struct token token = {.line = lexer->line, .column = lexer->column};
+	char         c     = lexer->input[lexer->word.start];
 
 	if (c == '\0') {
 		set_token(&token, TOKEN_EOF, NULL);
@@ -224,14 +222,14 @@ lexer_next_token(struct lexer *lexer)
 		lexer->in_content = false;
 		set_token(&token, TOKEN_LBRACE, &lexer->word);
 		break;
-	case '}':{
+	case '}': {
 		char prevc = lexer_peek_prev_char(lexer);
 		if (prevc == '}' || prevc == '%') {
 			lexer->in_content = true;
 		}
 		set_token(&token, TOKEN_RBRACE, &lexer->word);
 		break;
-	 }
+	}
 	case '%':
 		set_token(&token, TOKEN_PERCENT, &lexer->word);
 		break;

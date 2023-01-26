@@ -18,20 +18,20 @@ struct value {
 	union {
 		struct slice ident;
 		struct slice string;
-		int64_t integer;
-		bool boolean;
+		int64_t      integer;
+		bool         boolean;
 	};
 	enum value_type type;
 };
 
 static void
 check_parser_errors(struct parser *parser, const char *file, int line,
-		const char *func)
+                    const char *func)
 {
 	if (parser->errors->len > 0) {
 		printf("\n");
 		size_t i;
-		sds val;
+		sds    val;
 		vector_foreach (parser->errors, i, val) {
 			printf("parser error %lu: %s\n", i, val);
 		}
@@ -48,7 +48,7 @@ check_parser_errors(struct parser *parser, const char *file, int line,
 static void
 test_integer_literal(struct expression *expr, int64_t val)
 {
-	char buf[128];
+	char         buf[128];
 	struct slice sval;
 	asserteq(expr->type, EXPRESSION_INT);
 	asserteq(expr->integer.value, val);
@@ -67,7 +67,7 @@ test_identifier(struct expression *expr, struct slice *ident)
 static void
 test_boolean_literal(struct expression *expr, bool val)
 {
-	char *str = val ? "true" : "false";
+	char        *str  = val ? "true" : "false";
 	struct slice sval = slice_whole(str);
 	asserteq(expr->type, EXPRESSION_BOOL);
 	asserteq(expr->boolean.value, val);
@@ -81,41 +81,52 @@ test_string_literal(struct expression *expr, const struct slice *val)
 	asserteq(slice_cmp(&expr->string.value, val), 0);
 }
 
-
 static inline void
 test_expected(struct expression *expr, struct value v)
 {
-	switch(v.type) {
-		case VALUE_IDENT:
-			test_identifier(expr, &v.ident);
-			break;
-		case VALUE_INT:
-			test_integer_literal(expr, v.integer);
-			break;
-		case VALUE_BOOL:
-			test_boolean_literal(expr, v.boolean);
-			break;
-		case VALUE_STRING:
-			test_string_literal(expr, &v.string);
-			break;
+	switch (v.type) {
+	case VALUE_IDENT:
+		test_identifier(expr, &v.ident);
+		break;
+	case VALUE_INT:
+		test_integer_literal(expr, v.integer);
+		break;
+	case VALUE_BOOL:
+		test_boolean_literal(expr, v.boolean);
+		break;
+	case VALUE_STRING:
+		test_string_literal(expr, &v.string);
+		break;
 	}
 }
 
-#define VIDENT(v) \
-	(struct value){ .type = VALUE_IDENT, .ident = slice_whole(v) }
+#define VIDENT(v)                                    \
+	(struct value)                                   \
+	{                                                \
+		.type = VALUE_IDENT, .ident = slice_whole(v) \
+	}
 
-#define VINT(v) \
-	(struct value){ .type = VALUE_INT, .integer = v }
+#define VINT(v)                         \
+	(struct value)                      \
+	{                                   \
+		.type = VALUE_INT, .integer = v \
+	}
 
-#define VBOOL(v) \
-	(struct value){ .type = VALUE_BOOL, .boolean = v }
+#define VBOOL(v)                         \
+	(struct value)                       \
+	{                                    \
+		.type = VALUE_BOOL, .boolean = v \
+	}
 
-#define VSTR(v) \
-	(struct value){ .type = VALUE_STRING, .string = slice_whole(v) }
+#define VSTR(v)                                        \
+	(struct value)                                     \
+	{                                                  \
+		.type = VALUE_STRING, .string = slice_whole(v) \
+	}
 
 static inline void
 test_infix(struct infix *expr, struct value lval, struct slice *op,
-		struct value rval)
+           struct value rval)
 {
 	test_expected(expr->left, lval);
 	asserteq(slice_cmp(&expr->operator, op), 0);
@@ -126,18 +137,30 @@ static inline void
 test_literal_variables(void)
 {
 	struct {
-		char *input;
+		char        *input;
 		struct value val;
 	} tests[] = {
-		{ "{{ foo }}", VIDENT("foo"), },
-		{ "{{ 20 }}", VINT(20), },
-		{ "{{ true }}", VBOOL(true), },
-		{ "{{ false }}", VBOOL(false), },
-		{ 0 },
+		{
+			"{{ foo }}",
+			VIDENT("foo"),
+		},
+		{
+			"{{ 20 }}",
+			VINT(20),
+		},
+		{
+			"{{ true }}",
+			VBOOL(true),
+		},
+		{
+			"{{ false }}",
+			VBOOL(false),
+		},
+		{0},
 	};
 	for (size_t i = 0; tests[i].input != NULL; i++) {
-		struct parser *parser = parser_new(strdup("test"), tests[i].input);
-		struct template *tmpl = parser_parse_template(parser);
+		struct parser   *parser = parser_new(strdup("test"), tests[i].input);
+		struct template *tmpl   = parser_parse_template(parser);
 		check_parser_errors(parser);
 		assertneq(tmpl, NULL);
 		asserteq(tmpl->blocks->len, 1);
@@ -153,21 +176,45 @@ static inline void
 test_prefix_variables(void)
 {
 	struct {
-		char *input;
+		char        *input;
 		struct slice operator;
 		struct value val;
 	} tests[] = {
-		{ "{{ !foo }}", slice_whole("!"), VIDENT("foo"), },
-		{ "{{ -bar }}", slice_whole("-"), VIDENT("bar"), },
-		{ "{{ -20 }}", slice_whole("-"), VINT(20), },
-		{ "{{ !true }}", slice_whole("!"), VBOOL(true), },
-		{ "{{ !false }}", slice_whole("!"), VBOOL(false), },
-		{ "{{ not false }}", slice_whole("not"), VBOOL(false), },
-		{ 0 },
+		{
+			"{{ !foo }}",
+			slice_whole("!"),
+			VIDENT("foo"),
+		},
+		{
+			"{{ -bar }}",
+			slice_whole("-"),
+			VIDENT("bar"),
+		},
+		{
+			"{{ -20 }}",
+			slice_whole("-"),
+			VINT(20),
+		},
+		{
+			"{{ !true }}",
+			slice_whole("!"),
+			VBOOL(true),
+		},
+		{
+			"{{ !false }}",
+			slice_whole("!"),
+			VBOOL(false),
+		},
+		{
+			"{{ not false }}",
+			slice_whole("not"),
+			VBOOL(false),
+		},
+		{0},
 	};
 	for (size_t i = 0; tests[i].input != NULL; i++) {
-		struct parser *parser = parser_new(strdup("test"), tests[i].input);
-		struct template *tmpl = parser_parse_template(parser);
+		struct parser   *parser = parser_new(strdup("test"), tests[i].input);
+		struct template *tmpl   = parser_parse_template(parser);
 		check_parser_errors(parser);
 		assertneq(tmpl, NULL);
 		asserteq(tmpl->blocks->len, 1);
@@ -175,7 +222,7 @@ test_prefix_variables(void)
 		asserteq(blk->type, BLOCK_VARIABLE);
 		asserteq(blk->variable.expression->type, EXPRESSION_PREFIX);
 		struct expression *pref = blk->variable.expression;
-		asserteq(slice_cmp(&pref->prefix.operator, &tests[i].operator), 0);
+		asserteq(slice_cmp(&pref->prefix.operator, & tests[i].operator), 0);
 		test_expected(pref->prefix.right, tests[i].val);
 		parser_destroy(parser);
 		template_destroy(tmpl);
@@ -186,28 +233,88 @@ static inline void
 test_infix_variables(void)
 {
 	struct {
-		char *input;
+		char        *input;
 		struct value left;
 		struct slice operator;
 		struct value right;
 	} tests[] = {
-		{ "{{ foo + bar }}", VIDENT("foo"), slice_whole("+"), VIDENT("bar"), },
-		{ "{{ 6 - 9 }}", VINT(6),slice_whole("-"), VINT(9), },
-		{ "{{ 4 * 20 }}", VINT(4), slice_whole("*"), VINT(20), },
-		{ "{{ foo / 20 }}", VIDENT("foo"), slice_whole("/"), VINT(20), },
-		{ "{{ \"str\" == \"str\" }}", VSTR("str"), slice_whole("=="), VSTR("str"), },
-		{ "{{ true != false }}", VBOOL(true), slice_whole("!="), VBOOL(false), },
-		{ "{{ 4 < 20 }}", VINT(4), slice_whole("<"), VINT(20), },
-		{ "{{ 4 <= 20 }}", VINT(4), slice_whole("<="), VINT(20), },
-		{ "{{ 100 > 20 }}", VINT(100), slice_whole(">"), VINT(20), },
-		{ "{{ 100 >= 20 }}", VINT(100), slice_whole(">="), VINT(20), },
-		{ "{{ true and true }}", VBOOL(true), slice_whole("and"), VBOOL(true), },
-		{ "{{ true or false }}", VBOOL(true), slice_whole("or"), VBOOL(false), },
-		{ 0 },
+		{
+			"{{ foo + bar }}",
+			VIDENT("foo"),
+			slice_whole("+"),
+			VIDENT("bar"),
+		},
+		{
+			"{{ 6 - 9 }}",
+			VINT(6),
+			slice_whole("-"),
+			VINT(9),
+		},
+		{
+			"{{ 4 * 20 }}",
+			VINT(4),
+			slice_whole("*"),
+			VINT(20),
+		},
+		{
+			"{{ foo / 20 }}",
+			VIDENT("foo"),
+			slice_whole("/"),
+			VINT(20),
+		},
+		{
+			"{{ \"str\" == \"str\" }}",
+			VSTR("str"),
+			slice_whole("=="),
+			VSTR("str"),
+		},
+		{
+			"{{ true != false }}",
+			VBOOL(true),
+			slice_whole("!="),
+			VBOOL(false),
+		},
+		{
+			"{{ 4 < 20 }}",
+			VINT(4),
+			slice_whole("<"),
+			VINT(20),
+		},
+		{
+			"{{ 4 <= 20 }}",
+			VINT(4),
+			slice_whole("<="),
+			VINT(20),
+		},
+		{
+			"{{ 100 > 20 }}",
+			VINT(100),
+			slice_whole(">"),
+			VINT(20),
+		},
+		{
+			"{{ 100 >= 20 }}",
+			VINT(100),
+			slice_whole(">="),
+			VINT(20),
+		},
+		{
+			"{{ true and true }}",
+			VBOOL(true),
+			slice_whole("and"),
+			VBOOL(true),
+		},
+		{
+			"{{ true or false }}",
+			VBOOL(true),
+			slice_whole("or"),
+			VBOOL(false),
+		},
+		{0},
 	};
 	for (size_t i = 0; tests[i].input != NULL; i++) {
-		struct parser *parser = parser_new(strdup("test"), tests[i].input);
-		struct template *tmpl = parser_parse_template(parser);
+		struct parser   *parser = parser_new(strdup("test"), tests[i].input);
+		struct template *tmpl   = parser_parse_template(parser);
 		check_parser_errors(parser);
 		assertneq(tmpl, NULL);
 		asserteq(tmpl->blocks->len, 1);
@@ -215,7 +322,7 @@ test_infix_variables(void)
 		asserteq(blk->type, BLOCK_VARIABLE);
 		asserteq(blk->variable.expression->type, EXPRESSION_INFIX);
 		test_infix(&blk->variable.expression->infix,
-				tests[i].left, &tests[i].operator, tests[i].right);
+		           tests[i].left, &tests[i].operator, tests[i].right);
 		parser_destroy(parser);
 		template_destroy(tmpl);
 	}
@@ -224,11 +331,11 @@ test_infix_variables(void)
 static inline void
 test_map_variables(void)
 {
-	char *input = "{{ map.key }}";
-	struct value left = VIDENT("map");
-	struct value key = VIDENT("key");
-	struct parser *parser = parser_new(strdup("test"), input);
-	struct template *tmpl = parser_parse_template(parser);
+	char            *input  = "{{ map.key }}";
+	struct value     left   = VIDENT("map");
+	struct value     key    = VIDENT("key");
+	struct parser   *parser = parser_new(strdup("test"), input);
+	struct template *tmpl   = parser_parse_template(parser);
 	check_parser_errors(parser);
 	assertneq(tmpl, NULL);
 	asserteq(tmpl->blocks->len, 1);
@@ -245,13 +352,13 @@ test_map_variables(void)
 static inline void
 test_index_variables(void)
 {
-	char *input = "{{ arr[1 + 2] }}";
-	struct value left = VIDENT("arr");
-	struct value ileft = VINT(1);
-	struct slice iop = slice_whole("+");
-	struct value iright = VINT(2);
-	struct parser *parser = parser_new(strdup("test"), input);
-	struct template *tmpl = parser_parse_template(parser);
+	char            *input  = "{{ arr[1 + 2] }}";
+	struct value     left   = VIDENT("arr");
+	struct value     ileft  = VINT(1);
+	struct slice     iop    = slice_whole("+");
+	struct value     iright = VINT(2);
+	struct parser   *parser = parser_new(strdup("test"), input);
+	struct template *tmpl   = parser_parse_template(parser);
 	check_parser_errors(parser);
 
 	assertneq(tmpl, NULL);
@@ -350,11 +457,11 @@ test_operator_precedence(void)
 			"{{ foo.bar + bar[0].baz * foo.bar.baz }}",
 			"{{ (foo.bar + (bar[0].baz * foo.bar.baz)) }}",
 		},
-		{ 0 },
+		{0},
 	};
 	for (size_t i = 0; tests[i].input != NULL; i++) {
-		struct parser *parser = parser_new(strdup("test"), tests[i].input);
-		struct template *tmpl = parser_parse_template(parser);
+		struct parser   *parser = parser_new(strdup("test"), tests[i].input);
+		struct template *tmpl   = parser_parse_template(parser);
 		check_parser_errors(parser);
 		assertneq(tmpl, NULL);
 		asserteq(tmpl->blocks->len, 1);
@@ -371,17 +478,18 @@ test_operator_precedence(void)
 static inline void
 test_loop_tag(void)
 {
-	char *input = "{% for v in seq %}"
-				  "{% break %}"
-				  "{% endfor %}";
-	struct slice item = slice_whole("v");
-	struct slice seq = slice_whole("seq");
-	struct parser *parser = parser_new(strdup("test"), input);
-	struct template *tmpl = parser_parse_template(parser);
+	char            *input  = "{% for v in seq %}"
+							  "{% break %}"
+							  "{% endfor %}"
+							  "{{ foo }}";
+	struct slice     item   = slice_whole("v");
+	struct slice     seq    = slice_whole("seq");
+	struct parser   *parser = parser_new(strdup("test"), input);
+	struct template *tmpl   = parser_parse_template(parser);
 	check_parser_errors(parser);
 
 	assertneq(tmpl, NULL);
-	asserteq(tmpl->blocks->len, 1);
+	asserteq(tmpl->blocks->len, 2);
 	struct block *blk = tmpl->blocks->values[0];
 	asserteq(blk->type, BLOCK_TAG);
 	asserteq(blk->tag.type, TAG_FOR);
@@ -398,6 +506,9 @@ test_loop_tag(void)
 	asserteq(sub2->tag.type, TAG_CLOSE);
 	asserteq(sub2->tag.token.type, TOKEN_ENDFOR);
 
+	struct block *extra_blk = tmpl->blocks->values[1];
+	asserteq(extra_blk->type, BLOCK_VARIABLE);
+
 	parser_destroy(parser);
 	template_destroy(tmpl);
 }
@@ -405,21 +516,21 @@ test_loop_tag(void)
 static inline void
 test_cond_tag(void)
 {
-	char *input = "{% if false %}"
-				  "{{ foo }}"
-				  "{% elif 1 > 2 %}"
-				  "{{ bar }}"
-				  "{% else %}"
-				  "baz"
-				  "{% endif %}";
-	struct value ifexp = VIDENT("foo");
-	struct value elifl = VINT(1);
-	struct slice elifop = slice_whole(">");
-	struct value elifr = VINT(2);
-	struct value elifexp = VIDENT("bar");
-	struct slice elsecont = slice_whole("baz");
-	struct parser *parser = parser_new(strdup("test"), input);
-	struct template *tmpl = parser_parse_template(parser);
+	char            *input    = "{% if false %}"
+								"{{ foo }}"
+								"{% elif 1 > 2 %}"
+								"{{ bar }}"
+								"{% else %}"
+								"baz"
+								"{% endif %}";
+	struct value     ifexp    = VIDENT("foo");
+	struct value     elifl    = VINT(1);
+	struct slice     elifop   = slice_whole(">");
+	struct value     elifr    = VINT(2);
+	struct value     elifexp  = VIDENT("bar");
+	struct slice     elsecont = slice_whole("baz");
+	struct parser   *parser   = parser_new(strdup("test"), input);
+	struct template *tmpl     = parser_parse_template(parser);
 	check_parser_errors(parser);
 
 	assertneq(tmpl, NULL);
@@ -462,10 +573,10 @@ test_cond_tag(void)
 static inline void
 test_parent_tag(void)
 {
-	char *input = "{% extends \"base.html\" %}";
-	struct slice name = slice_whole("base.html");
-	struct parser *parser = parser_new(strdup("test"), input);
-	struct template *tmpl = parser_parse_template(parser);
+	char            *input  = "{% extends \"base.html\" %}";
+	struct slice     name   = slice_whole("base.html");
+	struct parser   *parser = parser_new(strdup("test"), input);
+	struct template *tmpl   = parser_parse_template(parser);
 	check_parser_errors(parser);
 
 	assertneq(tmpl, NULL);
@@ -482,11 +593,11 @@ test_parent_tag(void)
 static inline void
 test_tblock_tag(void)
 {
-	char *input = "{% block cock %}"
-				  "{% endblock %}";
-	struct slice name = slice_whole("cock");
-	struct parser *parser = parser_new(strdup("test"), input);
-	struct template *tmpl = parser_parse_template(parser);
+	char            *input  = "{% block cock %}"
+							  "{% endblock %}";
+	struct slice     name   = slice_whole("cock");
+	struct parser   *parser = parser_new(strdup("test"), input);
+	struct template *tmpl   = parser_parse_template(parser);
 	check_parser_errors(parser);
 
 	assertneq(tmpl, NULL);

@@ -58,7 +58,7 @@ struct roscha_object {
 sds roscha_object_string(const struct roscha_object *, sds str);
 
 /* Return the textual representation of the type */
-inline const char *roscha_type_print(enum roscha_type);
+const char *roscha_type_print(enum roscha_type);
 
 /* Create a new roscha object based on its type */
 struct roscha_object *roscha_object_new_int(int64_t val);
@@ -77,7 +77,12 @@ struct roscha_object *roscha_object_new_hmap(struct hmap *);
 		)(v)
 
 /* Increment reference count of object */
-void roscha_object_ref(struct roscha_object *);
+static inline void
+roscha_object_ref(struct roscha_object *obj)
+{
+	obj->refcount++;
+}
+
 
 /* Decrement reference count of object */
 void roscha_object_unref(struct roscha_object *);

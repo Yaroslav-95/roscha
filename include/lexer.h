@@ -16,7 +16,7 @@ struct lexer {
 	/* The current slice of the input string that will be tokenized */
 	struct slice word;
 	/* The current character belongs to content and should not be tokenized */
-	bool in_content;
+	bool   in_content;
 	size_t line;
 	size_t column;
 };

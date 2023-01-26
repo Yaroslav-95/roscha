@@ -12,9 +12,9 @@
 typedef void (hmap_cb)(const struct slice *key, void *value);
 
 struct hmap {
-    struct hnode **buckets;
-    size_t cap;
-    size_t size;
+	struct hnode **buckets;
+	size_t         cap;
+	size_t         size;
 };
 
 struct hmap_iter;
@@ -24,9 +24,9 @@ struct hmap *hmap_new_with_cap(size_t cap);
 
 #define hmap_new() hmap_new_with_cap(HASHMAP_CAP)
 
-/* 
+/*
  * Inserts a key-value pair into the map. Returns NULL if map did not have key,
- * old value if it did. 
+ * old value if it did.
  */
 void *hmap_sets(struct hmap *hm, struct slice key, void *value);
 
@@ -39,7 +39,7 @@ void *hmap_gets(struct hmap *hm, const struct slice *key);
 /* Same as hmap_gets but pass a C string instead */
 void *hmap_get(struct hmap *hm, const char *key);
 
-/* 
+/*
  * Removes a key from the map, returning the value at the key if the key was
  * previously in the map.
  */
@@ -56,7 +56,7 @@ struct hmap_iter *hmap_iter_new(struct hmap *);
 
 /* Get the next key, value */
 bool hmap_iter_next(struct hmap_iter *iter, const struct slice **key,
-		void **value);
+                    void **value);
 
 #define hmap_iter_foreach(it, k, v) while (hmap_iter_next(it, k, v))
 

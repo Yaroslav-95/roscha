@@ -61,9 +61,9 @@ enum token_type {
 /* A token in our template */
 struct token {
 	enum token_type type;
-	struct slice literal;
-	size_t line;
-	size_t column;
+	struct slice    literal;
+	size_t          line;
+	size_t          column;
 };
 
 /* Intialize our keywords hashmap */
@@ -73,7 +73,7 @@ void token_init_keywords(void);
 enum token_type token_lookup_ident(const struct slice *ident);
 
 /* Return a C string with the token type name */
-inline const char *token_type_print(enum token_type);
+const char *token_type_print(enum token_type);
 
 /* Concatenate this token to a sds string */
 sds token_string(struct token *, sds str);

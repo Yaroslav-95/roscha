@@ -29,8 +29,8 @@ static enum precedence precedence_values[] = {
 	PRE_INDEX,
 };
 
-static struct hmap *prefix_fns = NULL;
-static struct hmap *infix_fns = NULL;
+static struct hmap *prefix_fns  = NULL;
+static struct hmap *infix_fns   = NULL;
 static struct hmap *precedences = NULL;
 
 static struct block *parser_parse_block(struct parser *, struct block *opening);
@@ -76,7 +76,7 @@ parser_get_precedence(struct parser *parser, enum token_type t)
 static inline void
 parser_next_token(struct parser *parser)
 {
-	parser->cur_token = parser->peek_token;
+	parser->cur_token  = parser->peek_token;
 	parser->peek_token = lexer_next_token(parser->lexer);
 }
 
@@ -104,16 +104,16 @@ parser_cur_precedence(struct parser *parser)
 	return parser_get_precedence(parser, parser->cur_token.type);
 }
 
-#define parser_error(p, t, fmt, ...) \
-	sds err = sdscatfmt(sdsempty(), "%s:%U:%U: "fmt, parser->name, \
-			t.line, t.column, __VA_ARGS__); \
+#define parser_error(p, t, fmt, ...)                                \
+	sds err = sdscatfmt(sdsempty(), "%s:%U:%U: " fmt, parser->name, \
+	                    t.line, t.column, __VA_ARGS__);             \
 	vector_push(p->errors, err)
 
 static inline void
 parser_peek_error(struct parser *parser, enum token_type t)
 {
 	parser_error(parser, parser->peek_token, "expected token %s, got %s",
-			token_type_print(t), token_type_print(parser->peek_token.type));
+	             token_type_print(t), token_type_print(parser->peek_token.type));
 }
 
 static inline bool
@@ -131,7 +131,7 @@ static inline void
 parser_no_prefix_fn_error(struct parser *parser, enum token_type t)
 {
 	parser_error(parser, parser->cur_token, "%s not recognized as prefix",
-	                    token_type_print(t));
+	             token_type_print(t));
 }
 
 static struct expression *
@@ -148,7 +148,9 @@ parser_parse_expression(struct parser *parser, enum precedence pre)
 	       && !parser_peek_token_is(parser, TOKEN_PERCENT)
 	       && !parser_peek_token_is(parser, TOKEN_RBRACE)) {
 		infix_parse_f infix = parser_get_infix(parser, parser->peek_token.type);
-		if (!infix) { return lexpr; }
+		if (!infix) {
+			return lexpr;
+		}
 
 		parser_next_token(parser);
 		lexpr = infix(parser, lexpr);
@@ -161,8 +163,8 @@ static struct expression *
 parser_parse_identifier(struct parser *parser)
 {
 	struct expression *expr = malloc(sizeof(*expr));
-	expr->type = EXPRESSION_IDENT;
-	expr->token = parser->cur_token;
+	expr->type              = EXPRESSION_IDENT;
+	expr->token             = parser->cur_token;
 
 	return expr;
 }
@@ -171,8 +173,8 @@ static struct expression *
 parser_parse_integer(struct parser *parser)
 {
 	struct expression *expr = malloc(sizeof(*expr));
-	expr->type = EXPRESSION_INT;
-	expr->token = parser->cur_token;
+	expr->type              = EXPRESSION_INT;
+	expr->token             = parser->cur_token;
 
 	char *end;
 	expr->integer.value =
@@ -181,7 +183,7 @@ parser_parse_integer(struct parser *parser)
 	    && (expr->token.literal.str + expr->token.literal.end) < end) {
 		sds istr = slice_string(&expr->token.literal, sdsempty());
 		parser_error(parser, parser->cur_token, "%s is not a valid integer",
-				istr);
+		             istr);
 		sdsfree(istr);
 		free(expr);
 		return NULL;
@@ -194,9 +196,9 @@ static struct expression *
 parser_parse_boolean(struct parser *parser)
 {
 	struct expression *expr = malloc(sizeof(*expr));
-	expr->type = EXPRESSION_BOOL;
-	expr->token = parser->cur_token;
-	expr->boolean.value = expr->token.type == TOKEN_TRUE;
+	expr->type              = EXPRESSION_BOOL;
+	expr->token             = parser->cur_token;
+	expr->boolean.value     = expr->token.type == TOKEN_TRUE;
 
 	return expr;
 }
@@ -205,9 +207,9 @@ static struct expression *
 parser_parse_string(struct parser *parser)
 {
 	struct expression *expr = malloc(sizeof(*expr));
-	expr->type = EXPRESSION_STRING;
-	expr->token = parser->cur_token;
-	expr->string.value = parser->cur_token.literal;
+	expr->type              = EXPRESSION_STRING;
+	expr->token             = parser->cur_token;
+	expr->string.value      = parser->cur_token.literal;
 	expr->string.value.start++;
 	expr->string.value.end--;
 
@@ -219,7 +221,9 @@ parser_parse_grouped(struct parser *parser)
 {
 	parser_next_token(parser);
 	struct expression *expr = parser_parse_expression(parser, PRE_LOWEST);
-	if (!parser_expect_peek(parser, TOKEN_RPAREN)) { return NULL; }
+	if (!parser_expect_peek(parser, TOKEN_RPAREN)) {
+		return NULL;
+	}
 
 	return expr;
 }
@@ -228,8 +232,8 @@ static struct expression *
 parser_parse_prefix(struct parser *parser)
 {
 	struct expression *expr = malloc(sizeof(*expr));
-	expr->type = EXPRESSION_PREFIX;
-	expr->token = parser->cur_token;
+	expr->type              = EXPRESSION_PREFIX;
+	expr->token             = parser->cur_token;
 	expr->prefix.operator= parser->cur_token.literal;
 
 	parser_next_token(parser);
@@ -242,8 +246,8 @@ static struct expression *
 parser_parse_infix(struct parser *parser, struct expression *lexpr)
 {
 	struct expression *expr = malloc(sizeof(*expr));
-	expr->type = EXPRESSION_INFIX;
-	expr->token = parser->cur_token;
+	expr->type              = EXPRESSION_INFIX;
+	expr->token             = parser->cur_token;
 	expr->infix.operator= parser->cur_token.literal;
 	expr->infix.left = lexpr;
 
@@ -257,26 +261,26 @@ parser_parse_infix(struct parser *parser, struct expression *lexpr)
 static struct expression *
 parser_parse_mapkey(struct parser *parser, struct expression *lexpr)
 {
-	if (lexpr->type != EXPRESSION_IDENT 
-			&& lexpr->type != EXPRESSION_MAPKEY
-			&& lexpr->type != EXPRESSION_INDEX) {
+	if (lexpr->type != EXPRESSION_IDENT
+	    && lexpr->type != EXPRESSION_MAPKEY
+	    && lexpr->type != EXPRESSION_INDEX) {
 		sds got = expression_string(lexpr, sdsempty());
 		parser_error(parser, parser->cur_token,
-				"expected a map identifier, key or index; got %s", got);
+		             "expected a map identifier, key or index; got %s", got);
 		sdsfree(got);
 		return NULL;
 	}
 	struct expression *expr = malloc(sizeof(*expr));
-	expr->type = EXPRESSION_MAPKEY;
-	expr->token = parser->cur_token;
-	expr->indexkey.left = lexpr;
+	expr->type              = EXPRESSION_MAPKEY;
+	expr->token             = parser->cur_token;
+	expr->indexkey.left     = lexpr;
 
 	parser_next_token(parser);
 	expr->indexkey.key = parser_parse_expression(parser, PRE_INDEX);
 	if (expr->indexkey.key->type != EXPRESSION_IDENT) {
 		sds got = expression_string(expr->indexkey.key, sdsempty());
 		parser_error(parser, parser->cur_token,
-				"expected a map key identifier, got %s", got);
+		             "expected a map key identifier, got %s", got);
 		sdsfree(got);
 		expression_destroy(expr);
 		return NULL;
@@ -289,18 +293,18 @@ static struct expression *
 parser_parse_index(struct parser *parser, struct expression *lexpr)
 {
 	if (lexpr->type != EXPRESSION_IDENT
-			&& lexpr->type != EXPRESSION_MAPKEY
-			&& lexpr->type != EXPRESSION_INDEX) {
+	    && lexpr->type != EXPRESSION_MAPKEY
+	    && lexpr->type != EXPRESSION_INDEX) {
 		sds got = expression_string(lexpr, sdsempty());
 		parser_error(parser, parser->cur_token,
-				"expected a vector identifier, key or index; got %s", got);
+		             "expected a vector identifier, key or index; got %s", got);
 		sdsfree(got);
 		return NULL;
 	}
 	struct expression *expr = malloc(sizeof(*expr));
-	expr->type = EXPRESSION_INDEX;
-	expr->token = parser->cur_token;
-	expr->indexkey.left = lexpr;
+	expr->type              = EXPRESSION_INDEX;
+	expr->token             = parser->cur_token;
+	expr->indexkey.left     = lexpr;
 
 	parser_next_token(parser);
 	expr->indexkey.key = parser_parse_expression(parser, PRE_LOWEST);
@@ -348,7 +352,7 @@ static inline struct branch *
 parser_parse_branch(struct parser *parser, struct block *opening)
 {
 	struct branch *brnch = calloc(1, sizeof(*brnch));
-	brnch->token = parser->cur_token;
+	brnch->token         = parser->cur_token;
 
 	if (brnch->token.type == TOKEN_IF || brnch->token.type == TOKEN_ELIF) {
 		parser_next_token(parser);
@@ -384,7 +388,7 @@ parser_parse_branch(struct parser *parser, struct block *opening)
 static inline bool
 parser_parse_cond(struct parser *parser, struct block *blk)
 {
-	blk->tag.type = TAG_IF;
+	blk->tag.type      = TAG_IF;
 	blk->tag.cond.root = parser_parse_branch(parser, blk);
 	if (!blk->tag.cond.root) {
 		return false;
@@ -395,15 +399,15 @@ parser_parse_cond(struct parser *parser, struct block *blk)
 
 static inline bool
 parser_parse_cond_alt(struct parser *parser, struct block *blk,
-		struct block *opening)
+                      struct block *opening)
 {
 	if (opening == NULL || opening->type != BLOCK_TAG
-			|| opening->tag.type != TAG_IF) {
+	    || opening->tag.type != TAG_IF) {
 		parser_error(parser, parser->cur_token, "unexpected token %s",
-				token_type_print(parser->cur_token.type));
+		             token_type_print(parser->cur_token.type));
 		return false;
 	}
-	blk->tag.type = TAG_IF;
+	blk->tag.type      = TAG_IF;
 	blk->tag.cond.root = parser_parse_branch(parser, blk);
 	if (!blk->tag.cond.root) {
 		return false;
@@ -418,7 +422,7 @@ parser_parse_parent(struct parser *parser, struct block *blk)
 	blk->tag.type = TAG_EXTENDS;
 	if (!parser_expect_peek(parser, TOKEN_STRING)) return false;
 
-	blk->tag.parent.name = malloc(sizeof(*blk->tag.parent.name));
+	blk->tag.parent.name        = malloc(sizeof(*blk->tag.parent.name));
 	blk->tag.parent.name->token = parser->cur_token;
 	blk->tag.parent.name->value = parser->cur_token.literal;
 	blk->tag.parent.name->value.start++;
@@ -463,13 +467,13 @@ static inline struct block *
 parser_parse_tag(struct parser *parser, struct block *opening)
 {
 	struct block *blk = malloc(sizeof(*blk));
-	blk->type = BLOCK_TAG;
+	blk->type         = BLOCK_TAG;
 
 	parser_next_token(parser);
 	parser_next_token(parser);
 
 	blk->token = parser->cur_token;
-	
+
 	bool res = true;
 	switch (parser->cur_token.type) {
 	case TOKEN_FOR:
@@ -477,7 +481,9 @@ parser_parse_tag(struct parser *parser, struct block *opening)
 		break;
 	case TOKEN_BREAK:
 		blk->tag.type = TAG_BREAK;
-		goto onetoken;
+		if (!parser_expect_peek(parser, TOKEN_PERCENT)) goto fail;
+		if (!parser_expect_peek(parser, TOKEN_RBRACE)) goto fail;
+		break;
 	case TOKEN_IF:
 		res = parser_parse_cond(parser, blk);
 		break;
@@ -505,7 +511,7 @@ parser_parse_tag(struct parser *parser, struct block *opening)
 		goto closing;
 	default:;
 		parser_error(parser, parser->cur_token, "expected keyword, got %s",
-				token_type_print(parser->cur_token.type));
+		             token_type_print(parser->cur_token.type));
 		return NULL;
 	}
 
@@ -517,13 +523,12 @@ parser_parse_tag(struct parser *parser, struct block *opening)
 	return blk;
 closing:
 	blk->tag.type = TAG_CLOSE;
-onetoken:
 	if (!parser_expect_peek(parser, TOKEN_PERCENT)) goto fail;
 	if (!parser_peek_token_is(parser, TOKEN_RBRACE)) goto fail;
 	return blk;
 noopening:;
 	parser_error(parser, parser->cur_token, "unexpected closing tag %s",
-				token_type_print(parser->cur_token.type));
+	             token_type_print(parser->cur_token.type));
 fail:
 	free(blk);
 	return NULL;
@@ -533,8 +538,8 @@ static inline struct block *
 parser_parse_variable(struct parser *parser)
 {
 	struct block *blk = malloc(sizeof(*blk));
-	blk->type = BLOCK_VARIABLE;
-	blk->token = parser->peek_token;
+	blk->type         = BLOCK_VARIABLE;
+	blk->token        = parser->peek_token;
 
 	parser_next_token(parser);
 	parser_next_token(parser);
@@ -554,8 +559,8 @@ static inline struct block *
 parser_parse_content(struct parser *parser)
 {
 	struct block *blk = malloc(sizeof(*blk));
-	blk->type = BLOCK_CONTENT;
-	blk->token = parser->cur_token;
+	blk->type         = BLOCK_CONTENT;
+	blk->token        = parser->cur_token;
 
 	return blk;
 }
@@ -570,12 +575,12 @@ parser_parse_block(struct parser *parser, struct block *opening)
 			return parser_parse_variable(parser);
 		case TOKEN_PERCENT:
 			return parser_parse_tag(parser, opening);
-		default:{
+		default: {
 			parser_error(parser, parser->cur_token,
-					"expected token %s or %s, got %s",
-					token_type_print(TOKEN_LBRACE),
-					token_type_print(TOKEN_PERCENT),
-					token_type_print(parser->peek_token.type));
+			             "expected token %s or %s, got %s",
+			             token_type_print(TOKEN_LBRACE),
+			             token_type_print(TOKEN_PERCENT),
+			             token_type_print(parser->peek_token.type));
 			return NULL;
 		}
 		}
@@ -589,10 +594,10 @@ struct parser *
 parser_new(char *name, char *input)
 {
 	struct parser *parser = calloc(1, sizeof(*parser));
-	parser->name = name;
+	parser->name          = name;
 
 	struct lexer *lex = lexer_new(input);
-	parser->lexer = lex;
+	parser->lexer     = lex;
 
 	parser->errors = vector_new();
 
@@ -606,11 +611,11 @@ struct template *
 parser_parse_template(struct parser *parser)
 {
 	struct template *tmpl = malloc(sizeof(*tmpl));
-	tmpl->name = parser->name;
-	tmpl->source = (char *)parser->lexer->input;
-	parser->tblocks = hmap_new();
-	tmpl->child = NULL;
-	tmpl->blocks = vector_new();
+	tmpl->name            = parser->name;
+	tmpl->source          = (char *)parser->lexer->input;
+	parser->tblocks       = hmap_new();
+	tmpl->child           = NULL;
+	tmpl->blocks          = vector_new();
 
 	while (!parser_cur_token_is(parser, TOKEN_EOF)) {
 		struct block *blk = parser_parse_block(parser, NULL);
@@ -630,8 +635,8 @@ void
 parser_destroy(struct parser *parser)
 {
 	size_t i;
-	char *val;
-	vector_foreach(parser->errors, i, val) {
+	char  *val;
+	vector_foreach (parser->errors, i, val) {
 		sdsfree(val);
 	}
 	vector_free(parser->errors);
